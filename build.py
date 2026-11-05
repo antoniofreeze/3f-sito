@@ -3,7 +3,7 @@
 import datetime, html, json, os, pathlib, shutil
 
 QUI = pathlib.Path(__file__).parent
-VERSIONE = 1
+VERSIONE = 2
 PREFISSO = os.environ.get('PREFISSO', '')      # '' sul dominio; '/3f-sito' sull'indirizzo di prova
 BASE = os.environ.get('BASE', 'https://www.3filluminazione.com')
 PUBBLICO = False                               # True solo quando il sito va online sul dominio: toglie il noindex
@@ -34,15 +34,6 @@ MARCHI = [
     ('Cangini & Tucci', 'cangini-tucci.png', 'https://www.canginietucci.com'),
 ]
 
-MONDI = [
-    ('lampadari', 'Lampadari', 'Cristallo, vetro e metallo: dai classici alle linee più contemporanee, per i soffitti che chiedono una presenza.',
-     'Grande lampadario con sfere dorate acceso nello showroom'),
-    ('design', 'Luce di design', 'Sospensioni, plafoniere e applique a LED. Forme pensate per disegnare una stanza anche da spente.',
-     'Sospensione a LED dalla linea continua in showroom'),
-    ('arredo', 'Arredamento', 'Arredi e complementi da scegliere insieme alla luce, perché una casa si guarda tutta intera.',
-     'Divano bordeaux nello showroom, sotto le lampade esposte'),
-]
-
 SERVIZI = [
     ('Consulenza', 'Ti ascoltiamo e ti accompagniamo nella scelta, stanza per stanza, tra prodotti, stili e misure.'),
     ('Progettazione', 'Studiamo l’illuminazione di abitazioni, attività commerciali e spazi professionali.'),
@@ -60,6 +51,26 @@ ALT_GALLERIA = {
     '0485': 'Sala interna con pareti colorate e lampade',
 }
 GALLERIA = list(ALT_GALLERIA)
+
+
+COLLEZIONI = [
+    ('lampadari', 'Lampadari', 'Cristallo, vetro e metallo: dai classici alle linee più contemporanee, per i soffitti che chiedono una presenza.',
+     [('p-cristallo', 'Lampadario in cristallo con cerchio dorato'), ('p-tamburo', 'Lampadario a tamburo rivestito di cristalli'), ('p-specchi', 'Lampadario in lamelle di metallo specchiato'), ('p-disco', 'Lampadario con sfere dorate sotto un disco luminoso')]),
+    ('sospensioni', 'Sospensioni', 'Vetri trasparenti, ambrati e specchiati, da sole o in composizione, per tavoli, banconi e ingressi.',
+     [('p-gocce', 'Sospensioni a goccia in vetro e oro'), ('p-specchio', 'Sospensione a goccia in vetro specchiato'), ('p-ovale', 'Composizione di sospensioni su base ovale nera'), ('p-sfere', 'Sospensioni a sfera in vetro'), ('p-ambra', 'Sospensioni in vetro ambrato lavorato')]),
+    ('plafoniere', 'Plafoniere e LED', 'Cerchi e linee di luce che disegnano la stanza anche da spenti.',
+     [('p-led', 'Plafoniere circolari a LED accese'), ('p-linea', 'Sospensione a LED dalla linea continua'), ('p-anello', 'Anello luminoso rivestito di cristalli')]),
+    ('applique', 'Applique', 'La luce a parete per ingressi, corridoi e camere, dalle forme floreali ai metalli lucidi.',
+     [('p-applique', 'Applique in metallo e vetro su una colonna dello showroom'), ('p-parete', 'Parete di applique lungo il corridoio')]),
+    ('tavolo', 'Da tavolo e da terra', 'Paralumi, ceramiche e basi lavorate: la luce più vicina, quella che arreda un angolo.',
+     [('p-paralumi', 'Lampade da tavolo con paralumi in tessuto'), ('p-tavolo', 'Lampade da tavolo su un piano in vetro')]),
+    ('arredamento', 'Arredamento', 'Arredi e complementi da scegliere insieme alla luce, perché una casa si guarda tutta intera.',
+     [('p-divano', 'Divano bordeaux nello showroom'), ('p-salone', 'Il salone dello showroom con le lampade a soffitto')]),
+]
+
+TIPI_GALLERIA = {'0461': 'lampadari', '0462': 'lampadari', '0476': 'lampadari', '0477': 'lampadari', '0471': 'plafoniere', '0472': 'plafoniere', '0460': 'plafoniere',
+                 '0473': 'sospensioni', '0466': 'sospensioni', '0470': 'sospensioni', '0467': 'sospensioni', '0468': 'lampadari', '0465': 'sospensioni', '0469': 'sospensioni', '0464': 'sospensioni',
+                 '0475': 'applique', '0478': 'applique', '0456': 'tavolo', '0458': 'tavolo', '0459': 'tavolo'}
 
 ANNO = datetime.date.today().year
 e = html.escape
@@ -97,7 +108,7 @@ def coppia_apertura():
             f'</div>')
 
 def tessera(n):
-    return (f'<a class="tessera accende" href="{u(f"/assets/img/g{n}-1600.webp")}" data-luce>'
+    return (f'<a class="tessera accende" data-tipo="{TIPI_GALLERIA.get(n, "showroom")}" href="{u(f"/assets/img/g{n}-1600.webp")}" data-luce>'
             + foto(f'g{n}', (640, 1600), ALT_GALLERIA[n], '(max-width:760px) 50vw, 30vw') + '</a>')
 
 def schema():
@@ -110,7 +121,7 @@ def schema():
     return json.dumps(d, ensure_ascii=False)
 
 def intestazione(attiva, su_foto):
-    voci = [('/', 'Home'), ('/storia', 'La storia'), ('/galleria', 'Galleria'), ('/marchi', 'Le case')]
+    voci = [('/', 'Home'), ('/collezioni', 'Collezioni'), ('/storia', 'La storia'), ('/galleria', 'Galleria'), ('/marchi', 'Le case')]
     lk = ''.join(f'<a href="{u(h) or "/"}"{" aria-current=page" if attiva == h else ""}>{t}</a>' for h, t in voci)
     return f'''<a class="salta" href="#contenuto">Vai al contenuto</a>
 <header class="testata{' su-foto' if su_foto else ''}" data-testata>
@@ -130,7 +141,7 @@ def piede():
     <div><img class="logo-piede" src="{u('/assets/logo/logo.svg')}" alt="{a['marchio']}" width="280" height="90" loading="lazy"></div>
     <div><h2>Dove siamo</h2><p>{a['via']}<br>{a['cap']} {a['citta']} ({a['prov']})</p>{orari}</div>
     <div><h2>Contatti</h2><p><a href="tel:{a['tel_link']}">{a['tel']}</a><br><a href="mailto:{a['email']}">{a['email']}</a>{'<br>' + wa if wa else ''}</p>{f'<p class="sociali">{soc}</p>' if soc else ''}</div>
-    <div><h2>Il sito</h2><p><a href="{u('/storia')}">La storia</a><br><a href="{u('/galleria')}">Galleria</a><br><a href="{u('/marchi')}">Le case</a><br><a href="{u('/privacy-policy')}">Privacy</a></p></div>
+    <div><h2>Il sito</h2><p><a href="{u('/collezioni')}">Collezioni</a><br><a href="{u('/storia')}">La storia</a><br><a href="{u('/galleria')}">Galleria</a><br><a href="{u('/marchi')}">Le case</a><br><a href="{u('/privacy-policy')}">Privacy</a></p></div>
   </div>
   <p class="firma">© {ANNO} {a['ragione']}{piva} · Sito realizzato da <a href="https://freezestudio.it/" target="_blank" rel="noopener">Freeze Studio</a></p>
 </footer>
@@ -172,50 +183,79 @@ def pagina(slug, titolo, descr, corpo, attiva=None, su_foto=False, schema_ld=Fal
 </html>
 ''', encoding='utf-8')
 
+def diapo(nome, nome_m, alt, dida, attiva=False):
+    return (f'<figure class="diapo{" attiva" if attiva else ""}"><picture><source media="(max-width:760px)" srcset="{u(f"/assets/img/{nome_m}-800.webp")} 800w, {u(f"/assets/img/{nome_m}-1500.webp")} 1500w" sizes="100vw">'
+            f'<img src="{u(f"/assets/img/{nome}-1900.webp")}" srcset="{u(f"/assets/img/{nome}-1000.webp")} 1000w, {u(f"/assets/img/{nome}-1900.webp")} 1900w" sizes="100vw" alt="{e(alt, quote=True)}"{" fetchpriority=high" if attiva else " loading=lazy"}></picture><figcaption>{e(dida)}</figcaption></figure>')
+
 def home():
-    mondi = ''.join(
-        f'<article class="mondo mondo-{i}"><a class="accende" href="{u("/galleria")}" tabindex="-1" aria-hidden="true">{foto(n, (800, 1400), alt, "(max-width:760px) 100vw, 50vw")}</a><div><h3>{t}</h3><p>{d}</p></div></article>'
-        for i, (n, t, d, alt) in enumerate(MONDI, 1))
-    serv = ''.join(f'<div class="servizio"><h3>{t}</h3><p>{d}</p></div>' for t, d in SERVIZI)
-    tess = ''.join(tessera(n) for n in ['0471', '0466', '0470', '0472'])
     a = AZIENDA
-    corpo = f'''<section class="hero">
-  <picture><source media="(max-width:760px)" srcset="{u('/assets/img/hero-m-800.webp')} 800w, {u('/assets/img/hero-m-1200.webp')} 1200w" sizes="100vw"><img class="hero-foto" src="{u('/assets/img/hero-2400.webp')}" srcset="{u('/assets/img/hero-1000.webp')} 1000w, {u('/assets/img/hero-1800.webp')} 1800w, {u('/assets/img/hero-2400.webp')} 2400w" sizes="100vw" alt="Lampadario in cristallo con cerchio dorato, acceso nello showroom" fetchpriority="high"></picture>
+    parole = ['Lampadari', 'Sospensioni', 'Plafoniere', 'Applique', 'Lampade da tavolo', 'Lampade da terra', 'Arredamento']
+    nastro = ''.join(f'<span>{p}</span><i aria-hidden="true"></i>' for p in parole)
+    tess = ''
+    for i, (sl, tit, _, imm) in enumerate(COLLEZIONI, 1):
+        tess += f'<a class="collezione c{i} accende" href="{u("/collezioni")}#{sl}">{foto(imm[0][0], (800, 1500), imm[0][1], "(max-width:760px) 100vw, 50vw")}<span>{tit}</span></a>'
+    passi = ''.join(f'<li class="passo"><span class="goccia" aria-hidden="true"></span><h3>{t}</h3><p>{d}</p></li>' for t, d in SERVIZI)
+    scorri = ['p-cristallo', 'p-linea', 'p-specchio', 'p-disco', 'p-sfere', 'p-tamburo', 'p-ambra', 'p-led', 'p-paralumi', 'p-specchi']
+    alt_p = {n: al for _, _, _, imm in COLLEZIONI for n, al in imm}
+    striscia = ''.join(f'<a class="scena accende" href="{u("/assets/img/" + n + "-1500.webp")}" data-luce>{foto(n, (800, 1500), alt_p[n], "(max-width:760px) 78vw, 30vw")}</a>' for n in scorri)
+    corpo = f'''<section class="hero" data-diapo>
+  {diapo('h-1', 'p-cristallo', 'Lampadario in cristallo con cerchio dorato, acceso nello showroom', 'Lampadario in cristallo', True)}
+  {diapo('h-2', 'p-disco', 'Lampadario con sfere dorate sotto un disco luminoso', 'Sfere dorate e disco di luce')}
+  {diapo('h-3', 'p-linea', 'Sospensione a LED dalla linea continua', 'Linea di luce a LED')}
+  {diapo('h-4', 'p-ambra', 'Sospensioni in vetro ambrato lavorato', 'Vetri ambrati')}
   <div class="hero-testo">
     {filo()}
     <p class="corsivo grande">dal 1950</p>
     <h1>La luce che arreda.</h1>
     <p class="hero-sotto">Lampadari, illuminazione e arredamento nel nostro showroom di Misterbianco.</p>
-    <div class="azioni">{bottone('Vieni in showroom', u('/contatti'))}<a class="link-oro" href="{u('/galleria')}">Guarda la galleria</a></div>
+    <div class="azioni">{bottone('Scopri le collezioni', u('/collezioni'))}<a class="link-oro" href="{u('/contatti')}#mappa">Vieni in showroom</a></div>
   </div>
+  <button class="pausa" type="button" data-pausa aria-label="Ferma le immagini"><span aria-hidden="true">❙❙</span></button>
 </section>
 
-<section class="sezione due-colonne storia-breve">
-  <figure class="accende storia-foto">{foto('storica', (800, 1600), 'Il negozio in una foto d’epoca: pentole appese, piatti e un uomo sulla porta', '(max-width:760px) 100vw, 55vw')}<figcaption><span class="corsivo">dal 1950</span></figcaption></figure>
-  <div class="storia-testo">
-    {filo()}
-    <h2>Dal 1950 al vostro fianco</h2>
-    <p>Azienda storica, nata dalla passione per la luce e dall’esperienza maturata nell’illuminazione e nel materiale elettrico.</p>
-    <p>Da allora accompagniamo privati, professionisti e attività commerciali nella scelta più adatta a valorizzare ogni ambiente.</p>
-    <a class="link-oro" href="{u('/storia')}">Leggi la nostra storia</a>
-  </div>
+<div class="nastro" aria-label="{', '.join(parole)}"><div aria-hidden="true">{nastro}{nastro}{nastro}</div></div>
+
+<section class="sezione chiara manifesto">
+  <p class="corsivo grande">Finocchiaro Home</p>
+  <h2>Una stanza cambia quando cambia la luce. Dal 1950 aiutiamo a scegliere quella giusta.</h2>
+  <p>Consulenza, lampadari, lampade e arredi da vedere dal vivo, accesi, uno accanto all’altro.</p>
 </section>
 
 <section class="sezione scura">
-  <header class="titolo-sezione">{filo()}<h2>Cosa trovi in showroom</h2></header>
-  <div class="mondi">{mondi}</div>
+  <header class="titolo-sezione riga">{filo()}<div><h2>Le collezioni</h2></div><a class="link-oro" href="{u('/collezioni')}">Vedile tutte</a></header>
+  <div class="collezioni">{tess}</div>
 </section>
 
-<section class="sezione servizi-blocco">
+<section class="torcia" data-torcia aria-label="Il salone dello showroom">
+  <img class="t-base" src="{u('/assets/img/g0463-1600.webp')}" alt="" loading="lazy" decoding="async">
+  <img class="t-luce" src="{u('/assets/img/g0463-1600.webp')}" alt="Il salone dello showroom, con le lampade a soffitto e un divano bordeaux" loading="lazy" decoding="async">
+  <div class="t-testo">
+    <h2>Muovi la luce</h2>
+    <p>Passa con il dito o con il mouse: lo showroom si accende dove arrivi tu.</p>
+  </div>
+</section>
+
+<section class="sezione chiara storia-breve">
+  <div class="anno" aria-hidden="true">1950</div>
+  <div class="due-colonne">
+    <figure class="accende storia-foto">{foto('storica', (800, 1600), 'Il negozio in una foto d’epoca: pentole appese, piatti e un uomo sulla porta', '(max-width:760px) 100vw, 55vw')}<figcaption><span class="corsivo">dal 1950</span></figcaption></figure>
+    <div class="storia-testo">
+      <h2>Dal 1950 al vostro fianco</h2>
+      <p>Azienda storica, nata dalla passione per la luce e dall’esperienza maturata nell’illuminazione e nel materiale elettrico.</p>
+      <p>Da allora accompagniamo privati, professionisti e attività commerciali nella scelta più adatta a valorizzare ogni ambiente.</p>
+      <a class="link-oro" href="{u('/storia')}">Leggi la nostra storia</a>
+    </div>
+  </div>
+</section>
+
+<section class="sezione">
   <header class="titolo-sezione">{filo()}<h2>Dalla scelta al progetto</h2><p>Progettazione, fornitura e consulenza illuminotecnica per ambienti residenziali e professionali.</p></header>
-  <div class="servizi">{serv}</div>
+  <ol class="passi" data-passi>{passi}</ol>
 </section>
 
-<section class="sezione scura">
-  <header class="titolo-sezione">{filo()}<h2>Galleria</h2></header>
-  {coppia_apertura()}
-  <div class="tessere tessere-4">{tess}</div>
-  <p class="centro">{bottone('Tutta la galleria', u('/galleria'), 'btn btn-vuoto')}</p>
+<section class="sezione scura striscia-blocco">
+  <header class="titolo-sezione riga">{filo()}<div><h2>Da vicino</h2></div><a class="link-oro" href="{u('/galleria')}">Tutta la galleria</a></header>
+  <div class="striscia" tabindex="0" aria-label="Foto dei pezzi in showroom, scorri di lato">{striscia}</div>
 </section>
 
 <section class="sezione">
@@ -224,7 +264,7 @@ def home():
 </section>
 
 <section class="visita">
-  <div class="accende visita-foto">{foto('gocce', (800, 1200), 'Sospensioni a goccia accese nello showroom', '100vw')}</div>
+  <div class="accende visita-foto">{foto('p-tamburo', (800, 1500), 'Lampadario a tamburo rivestito di cristalli', '100vw')}</div>
   <div class="visita-testo">
     {filo()}
     <h2>La luce va vista accesa.</h2>
@@ -232,8 +272,21 @@ def home():
     <div class="azioni">{bottone('Come raggiungerci', u('/contatti') + '#mappa')}<a class="link-oro" href="tel:{a['tel_link']}">{a['tel']}</a></div>
   </div>
 </section>'''
-    pre = f'<link rel="preload" as="image" media="(max-width:760px)" href="{u("/assets/img/hero-m-800.webp")}"><link rel="preload" as="image" media="(min-width:761px)" href="{u("/assets/img/hero-1800.webp")}">'
+    pre = f'<link rel="preload" as="image" media="(max-width:760px)" href="{u("/assets/img/p-cristallo-800.webp")}"><link rel="preload" as="image" media="(min-width:761px)" href="{u("/assets/img/h-1-1900.webp")}">'
     pagina('/', f'{AZIENDA["marchio"]} | Lampadari e arredamento a Misterbianco', 'Dal 1950 lampadari, illuminazione e arredamento: showroom a Misterbianco (CT), in Corso Carlo Marx 24, con consulenza e progettazione della luce.', corpo, '/', True, True, pre)
+
+def collezioni():
+    indice = ''.join(f'<a href="#{sl}">{t}</a>' for sl, t, _, _ in COLLEZIONI)
+    blocchi = ''
+    for i, (sl, t, d, imm) in enumerate(COLLEZIONI):
+        fot = ''.join(f'<a class="accende" href="{u("/assets/img/" + n + "-1500.webp")}" data-luce>{foto(n, (800, 1500), al, "(max-width:760px) 100vw, 40vw")}</a>' for n, al in imm)
+        blocchi += (f'<section class="collezione-blocco{" chiara" if i % 2 else ""}" id="{sl}"><div class="c-testo">{filo()}<h2>{t}</h2><p>{d}</p>'
+                    f'<a class="link-oro" href="{u("/contatti")}?argomento={t.replace(" ", "+")}#scrivici">Chiedi informazioni</a></div><div class="c-foto{" dispari" if len(imm) % 2 else ""}">{fot}</div></section>')
+    corpo = apertura('Collezioni', 'Quello che trovi nel nostro showroom, diviso per tipo. Nel negozio trovi anche il materiale elettrico.') + f'''
+<nav class="indice" aria-label="Le collezioni">{indice}</nav>
+{blocchi}
+<section class="sezione centro"><h2 class="titolo-medio">Non sai da dove partire?</h2><p>Raccontaci la stanza: ti aiutiamo a scegliere.</p><div class="azioni azioni-centro">{bottone('Scrivici', u('/contatti') + '#scrivici')}<a class="link-oro" href="tel:{AZIENDA['tel_link']}">{AZIENDA['tel']}</a></div></section>'''
+    pagina('/collezioni', f'Collezioni: lampadari, sospensioni, arredamento | {AZIENDA["breve"]} Finocchiaro Home', 'Lampadari, sospensioni, plafoniere e LED, applique, lampade da tavolo e da terra, arredamento: le collezioni dello showroom di Misterbianco.', corpo, '/collezioni')
 
 def apertura(titolo, sotto='', corsivo=''):
     c = f'<p class="corsivo grande">{corsivo}</p>' if corsivo else ''
@@ -243,10 +296,13 @@ def apertura(titolo, sotto='', corsivo=''):
 def storia():
     corpo = apertura('La nostra storia', corsivo='dal 1950') + f'''
 <section class="sezione-stretta">{coppia_apertura()}</section>
-<section class="sezione testo-lungo">
+<section class="sezione chiara storia-breve storia-lunga">
+  <div class="anno" aria-hidden="true">1950</div>
+  <div class="testo-lungo">
   <h2>Le nostre origini</h2>
   <p>Azienda storica attiva dal 1950, 3F nasce dalla passione per la luce e dall’esperienza maturata nel settore dell’illuminazione e del materiale elettrico. Nel corso degli anni abbiamo accompagnato privati, professionisti e attività commerciali nella scelta delle soluzioni più adatte per valorizzare ogni ambiente.</p>
   <p>Grazie alla collaborazione con importanti case del settore e a una costante attenzione alla qualità e all’innovazione, offriamo prodotti affidabili e soluzioni pensate per unire funzionalità, design ed efficienza energetica.</p>
+  </div>
 </section>
 <section class="sezione scura">
   <div class="tre-testi">
@@ -255,6 +311,7 @@ def storia():
     <div>{filo()}<h2>Le persone</h2><p>Dietro 3F c’è un gruppo di professionisti che mette passione, competenza ed esperienza al servizio del cliente: dalla scelta dei prodotti fino alla realizzazione del progetto.</p></div>
   </div>
 </section>
+<section class="pannello accende">{foto('p-salone', (800, 1500), 'Il salone dello showroom con le lampade a soffitto', '100vw')}<div><h2>Oggi, a Misterbianco</h2><p>Un grande salone di luci e arredi, da guardare accesi.</p></div></section>
 <section class="sezione centro">
   <h2 class="titolo-medio">Vieni a conoscerci in showroom</h2>
   <div class="azioni azioni-centro">{bottone('Contatti e indirizzo', u('/contatti'))}<a class="link-oro" href="{u('/galleria')}">Guarda la galleria</a></div>
@@ -264,7 +321,9 @@ def storia():
 def galleria():
     tess = ''.join(tessera(n) for n in GALLERIA)
     corpo = apertura('Galleria', 'Lo showroom di Misterbianco, tra lampadari, sospensioni e arredi.') + f'''
-<section class="sezione-stretta">{coppia_apertura()}<div class="tessere">{tess}</div></section>
+<section class="sezione-stretta">{coppia_apertura()}
+  <div class="filtri" role="group" aria-label="Filtra le foto" data-filtri><button type="button" data-f="tutte" aria-pressed="true">Tutte</button><button type="button" data-f="lampadari" aria-pressed="false">Lampadari</button><button type="button" data-f="sospensioni" aria-pressed="false">Sospensioni</button><button type="button" data-f="plafoniere" aria-pressed="false">Plafoniere e LED</button><button type="button" data-f="applique" aria-pressed="false">Applique</button><button type="button" data-f="tavolo" aria-pressed="false">Da tavolo</button><button type="button" data-f="showroom" aria-pressed="false">Showroom</button></div>
+  <div class="tessere" data-griglia>{tess}</div></section>
 <section class="sezione centro"><h2 class="titolo-medio">Dal vivo è un’altra luce</h2><div class="azioni azioni-centro">{bottone('Vieni in showroom', u('/contatti'))}</div></section>'''
     pagina('/galleria', f'Galleria dello showroom | {AZIENDA["breve"]} Finocchiaro Home', 'Le foto dello showroom di Misterbianco: lampadari in cristallo, sospensioni, luci a LED e arredamento.', corpo, '/galleria')
 
@@ -338,10 +397,10 @@ def extra():
     # I vecchi indirizzi di Wix continuano a funzionare
     for vecchio, nuovo in {'about-us': '/storia', 'projects': '/galleria', 'get-a-quote': '/contatti'}.items():
         (QUI / f'{vecchio}.html').write_text(f'<!doctype html><html lang="it"><meta charset="utf-8"><title>Pagina spostata</title><meta name="robots" content="noindex"><link rel="canonical" href="{BASE}{nuovo}"><meta http-equiv="refresh" content="0;url={u(nuovo)}"><p><a href="{u(nuovo)}">La pagina si è spostata: vai qui</a></p></html>\n', encoding='utf-8')
-    pagine = ['/', '/storia', '/galleria', '/marchi', '/contatti', '/privacy-policy']
+    pagine = ['/', '/collezioni', '/storia', '/galleria', '/marchi', '/contatti', '/privacy-policy']
     (QUI / 'sitemap.xml').write_text('<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n' + ''.join(f'  <url><loc>{BASE}{p}</loc></url>\n' for p in pagine) + '</urlset>\n', encoding='utf-8')
     (QUI / 'robots.txt').write_text((f'User-agent: *\nAllow: /\n\nSitemap: {BASE}/sitemap.xml\n' if PUBBLICO else 'User-agent: *\nDisallow: /\n'), encoding='utf-8')
 
 if __name__ == '__main__':
-    home(); storia(); galleria(); case(); contatti(); privacy(); extra()
+    home(); collezioni(); storia(); galleria(); case(); contatti(); privacy(); extra()
     print('Fatto:', sorted(p.name for p in QUI.glob('*.html')))

@@ -21,12 +21,61 @@
     el.forEach(function (x) { io.observe(x); });
   } else el.forEach(function (x) { x.classList.add('in'); });
 
+
+  // Immagini di copertina che si alternano, con pausa
+  var hero = document.querySelector('[data-diapo]');
+  if (hero) {
+    var dia = hero.querySelectorAll('.diapo'), d = 0, tm = null, bp = hero.querySelector('[data-pausa]');
+    var gira = function () { dia[d].classList.remove('attiva'); d = (d + 1) % dia.length; dia[d].classList.add('attiva'); };
+    var ferma = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    var avvia = function () { tm = setInterval(gira, 6500); };
+    if (ferma) { bp.hidden = true; } else avvia();
+    bp.addEventListener('click', function () {
+      var p = tm !== null;
+      if (p) { clearInterval(tm); tm = null; } else avvia();
+      bp.setAttribute('aria-pressed', p); bp.setAttribute('aria-label', p ? 'Riavvia le immagini' : 'Ferma le immagini');
+      bp.firstElementChild.textContent = p ? '▶' : '❙❙';
+    });
+  }
+
+  // Muovi la luce: segue dito o mouse; da sola gira piano finche' nessuno la tocca
+  var to = document.querySelector('[data-torcia]');
+  if (to && !window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+    var toccata = false, t0 = 0, vis = false;
+    var pos = function (x, y) { to.style.setProperty('--x', x + 'px'); to.style.setProperty('--y', y + 'px'); };
+    to.addEventListener('pointermove', function (ev) { toccata = true; var r = to.getBoundingClientRect(); pos(ev.clientX - r.left, ev.clientY - r.top); });
+    to.addEventListener('pointerdown', function (ev) { toccata = true; var r = to.getBoundingClientRect(); pos(ev.clientX - r.left, ev.clientY - r.top); });
+    var giro = function (t) {
+      if (toccata) return;
+      if (vis) { var r = to.getBoundingClientRect(), s = t / 1000; pos(r.width * (.5 + .36 * Math.sin(s * .55)), r.height * (.42 + .26 * Math.sin(s * .9))); }
+      requestAnimationFrame(giro);
+    };
+    if ('IntersectionObserver' in window) new IntersectionObserver(function (v) { vis = v[0].isIntersecting; }).observe(to); else vis = true;
+    requestAnimationFrame(giro);
+  }
+
+  // Filtri della galleria
+  var fil = document.querySelector('[data-filtri]'), gr = document.querySelector('[data-griglia]');
+  if (fil && gr) fil.addEventListener('click', function (ev) {
+    var b = ev.target.closest('button'); if (!b) return;
+    fil.querySelectorAll('button').forEach(function (x) { x.setAttribute('aria-pressed', x === b); });
+    var f = b.getAttribute('data-f');
+    gr.classList.toggle('filtrate', f !== 'tutte');
+    gr.querySelectorAll('.tessera').forEach(function (t) { t.hidden = f !== 'tutte' && t.getAttribute('data-tipo') !== f; if (!t.hidden) t.classList.add('in'); });
+  });
+
+  // Dalla pagina Collezioni: argomento gia' scritto nel messaggio
+  var mes = document.getElementById('messaggio'), arg = new URLSearchParams(location.search).get('argomento');
+  if (mes && arg && !mes.value) mes.value = 'Vorrei informazioni su: ' + arg + '. ';
+
   // Foto ingrandita
   var box = document.querySelector('[data-box]'), lk = Array.prototype.slice.call(document.querySelectorAll('[data-luce]'));
   if (box && box.showModal && lk.length) {
     var im = box.querySelector('img'), dida = box.querySelector('[data-didascalia]'), i = 0;
     var mostra = function (n) {
+      var dir = n < i ? -1 : 1, g = 0;
       i = (n + lk.length) % lk.length;
+      while (lk[i].hidden && g++ < lk.length) i = (i + dir + lk.length) % lk.length;
       var t = lk[i].querySelector('img');
       im.src = lk[i].getAttribute('href'); im.alt = t.alt; dida.textContent = t.alt;
     };
